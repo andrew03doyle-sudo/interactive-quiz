@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Anime Quiz</title>
+</head>
+<body>
+<h1>Anime Quiz</h1>
+
+
+
+<form id="quiz">
+
+  
+  <fieldset data-type="mcq" data-answer="a">
+    <legend>1) Who created <em>Naruto</em>?</legend>
+    <label><input type="radio" name="q1" value="a"> Masashi Kishimoto</label><br>
+    <label><input type="radio" name="q1" value="b"> Tite Kubo</label><br>
+    <label><input type="radio" name="q1" value="c"> Eiichiro Oda</label><br>
+    <label><input type="radio" name="q1" value="d"> Akira Toriyama</label><br>
+    <div class="feedback"></div>
+  </fieldset>
+
+  
+  <fieldset data-type="mcq" data-answer="b">
+    <legend>2) Who is the captain of the Straw Hat Pirates in <em>One Piece</em>?</legend>
+    <label><input type="radio" name="q2" value="a"> Roronoa Zoro</label><br>
+    <label><input type="radio" name="q2" value="b"> Monkey D. Luffy</label><br>
+    <label><input type="radio" name="q2" value="c"> Sanji</label><br>
+    <label><input type="radio" name="q2" value="d"> Nami</label><br>
+    <div class="feedback"></div>
+  </fieldset>
+
+  
+  <fieldset data-type="text" data-answer="Pikachu">
+    <legend>3) Name the yellow electric mouse Pokémon who partners with Ash:</legend>
+    <input type="text" name="q3" placeholder="Your answer">
+    <div class="feedback"></div>
+  </fieldset>
+
+  <p>
+    <button type="button" id="check">Check Answers</button>
+    <button type="reset" id="resetBtn">Reset</button>
+  </p>
+
+  <p id="score"></p>
+</form>
+
+<script>
+ 
+  const form = document.getElementById('quiz');
+  const checkBtn = document.getElementById('check');
+  const resetBtn = document.getElementById('resetBtn');
+  const scoreEl = document.getElementById('score');
+
+  checkBtn.addEventListener('click', () => {
+    const sets = [...form.querySelectorAll('fieldset')];
+    let correct = 0;
+
+    sets.forEach((fs) => {
+      const type = fs.dataset.type;
+      const answer = (fs.dataset.answer || '').toString();
+      const fb = fs.querySelector('.feedback');
+      let ok = false;
+
+      if (type === 'mcq') {
+        const name = fs.querySelector('input[type="radio"]')?.name;
+        const chosen = form.querySelector(`input[name="${name}"]:checked`);
+        ok = chosen && chosen.value === answer;
+      } else if (type === 'text') {
+        const input = fs.querySelector('input[type="text"]');
+        const got = (input.value || '').trim();
+        ok = got.toLowerCase() === answer.toLowerCase();
+      }
+
+      fb.textContent = ok ? 'Correct' : 'Incorrect';
+      if (ok) correct++;
+    });
+
+    scoreEl.textContent = `Score: ${correct} / ${sets.length}`;
+  });
+
+  resetBtn.addEventListener('click', () => {
+    form.querySelectorAll('.feedback').forEach(fb => fb.textContent = '');
+    scoreEl.textContent = '';
+  });
+</script>
+</body>
+</html>
