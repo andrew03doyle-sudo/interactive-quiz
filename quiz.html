@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Simple Quiz</title>
+<style>
+  body{font-family:system-ui,Arial,sans-serif;margin:0;background:#111;color:#eee;display:grid;place-items:center;min-height:100vh}
+  .box{width:min(680px,92%);background:#1b1b1b;border:1px solid #2b2b2b;border-radius:10px;padding:18px}
+  h1{margin:0 0 10px;font-size:20px}
+  .q{margin:14px 0}
+  .opt{display:block;margin:8px 0;padding:8px;border:1px solid #2b2b2b;border-radius:8px;cursor:pointer}
+  .opt input{margin-right:8px}
+  input[type="text"]{width:100%;padding:10px;border-radius:8px;border:1px solid #2b2b2b;background:#0f0f0f;color:#eee}
+  .row{display:flex;gap:8px;justify-content:space-between;margin-top:12px;flex-wrap:wrap}
+  button{border:0;background:#4f46e5;color:#fff;padding:10px 12px;border-radius:8px;cursor:pointer}
+  button.secondary{background:#2b2b2b}
+  .small{color:#aaa;font-size:12px;margin-top:6px}
+  .good{color:#22c55e}.bad{color:#ef4444}
+</style>
+</head>
+<body>
+<div class="box">
+  <h1 id="title">My Quiz</h1>
+  <div class="small" id="meta"></div>
+  <div id="view"></div>
+  <div class="row">
+    <button class="secondary" id="prev">Previous</button>
+    <div style="flex:1"></div>
+    <button class="secondary" id="check">Check</button>
+    <button id="next">Next</button>
+    <button id="finish">Finish</button>
+  </div>
+  <div class="small" id="feedback"></div>
+</div>
+
+<script>
+/* =======================
+   EDIT ME: Your quiz data
+   =======================
+
+  How to add questions:
+  - Multiple choice:
+      { q: "Question text", options: ["A","B","C"], answer: 1 }
+      (answer uses the option index starting at 0)
+  - Short text:
+      { q: "Type the chemical symbol for water", text:true, answer:/^H2O$/i }
+      (answer can be a string or RegExp)
+*/
+const QUIZ_TITLE = "Sample Quiz";
+const QUESTIONS = [
+  { q: "Which planet is known as the Red Planet?", options:["Venus","Mars","Jupiter","Mercury"], answer:1 },
+  { q: "Select the largest number:", options:["21","9","34","3"], answer:2 },
+  { q: "Type the chemical symbol for water:", text:true, answer:/^H2O$/i }
+];
+
+/* ====== No edits needed below ====== */
+const titleEl = document.getElementById("title");
+const metaEl = document.getElementById("meta");
+const view = document.getElementById("view");
+const feedback = document.getElementById("feedback");
+const prevBtn = document.getElementById("prev");
+const nextBtn = document.getElementById("next");
+const checkBtn = document.getElementById("check");
+const finishBtn = document.getElementById("finish");
+
+titleEl.textContent = QUIZ_TITLE;
+
+let idx = 0;
+const answers = {}; // qIndex -> value
+
+function render(){
+  metaEl.textContent = `Question ${idx+1} of ${QUESTIONS.length}`;
+  const q = QUESTIONS[idx];
+  feedback.textContent = "";
+  if (q.text){
+    const val = (answers[idx] ?? "");
+    view.innerHTML = `
+      <div class="q">${escapeHTML(q.q)}</div>
+      <input id="textAns" type="text" placeholder="Your answer" value="${escapeAttr(val)}" />
+    `;
+    document.getElementById("textAns").addEventListener("input", e=>{
+      answers[idx] = e.target.value;
+    });
+  } else {
+    const val = answers[idx];
+    view.innerHTML = `
+      <div class="q">${escapeHTML(q.q)}</div>
+      ${q.options.map((t,i)=>`
+        <label class="opt">
+          <input type="radio" name="opt" value="${i}" ${i===val?"checked":""}/>
+          ${escapeHTML(t)}
+        </label>
+      `).join("")}
+    `;
+    view.querySelectorAll('input[name="opt"]').forEach(r=>{
+      r.addEventListener("change", e=>{
+        answers[idx] = Number(e.target.value);
+      });
+    });
+  }
+  prevBtn.disabled = idx===0;
+  nextBtn.disabled = idx===QUESTIONS.length-1;
+}
+
+function gradeOne(i){
+  const q = QUESTIONS[i];
+  const a = answers[i];
+  if (q.text){
+    const expect = q.answer;
+    const got = (a ?? "").toString().trim();
+    if (expect instanceof RegExp) return expect.test(got);
+    return got.toLowerCase() === String(expect).toLowerCase();
+  } else {
+    return Number(a) === Number(q.answer);
+  }
+}
+
+function finish(){
+  let score = 0;
+  for (let i=0;i<QUESTIONS.length;i++){
+    if (gradeOne(i)) score++;
+  }
+  const percent = Math.round(100*score/QUESTIONS.length);
+  view.innerHTML = `
+    <h2 style="margin:0 0 6px">Results</h2>
+    <div>Score: <strong>${score}</strong> / ${QUESTIONS.length} (${percent}%)</div>
+    <div class="small">Use the buttons to try again.</div>
+  `;
+  feedback.textContent = "";
+  idx = 0;
+}
+
+prevBtn.onclick = ()=>{ if (idx>0){ idx--; render(); }};
+nextBtn.onclick = ()=>{ if (idx<QUESTIONS.length-1){ idx++; render(); }};
+checkBtn.onclick = ()=>{
+  const ok = gradeOne(idx);
+  feedback.innerHTML = ok
+    ? `<span class="good">✔ Correct</span>`
+    : `<span class="bad">✖ Incorrect</span>`;
+};
+finishBtn.onclick = finish;
+
+function escapeHTML(s=""){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));}
+function escapeAttr(s=""){return String(s).replace(/"/g,"&quot;");}
+
+render();
+</script>
+</body>
+</html>
